@@ -1,4 +1,10 @@
-import stream from 'stream'
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+var _stream = _interopRequireDefault(require("stream"));
+
+var _class, _temp;
 
 /**
  * Transform stream that follows the file object stream (vinyl file stream) specification - https://github.com/gulpjs/vinyl
@@ -14,98 +20,89 @@ import stream from 'stream'
  *          ↓
  *      `<html>{% print('exampleText') %}</html>` // replace fragment markers with the actual fragment content.
  */
-const self = class FragmentIndentation extends stream.Transform {
-  static indentation = {
-    openning: {
-      regex: /{%/g,
-      symbol: '{%',
-      length: 2,
-    },
-    closing: {
-      regex: /%}/g,
-      symbol: '%}',
-      length: 2,
-    },
-  }
-  static fragmentKey = 'FRAGMENT'
-  static fragmentArray = []
-
+const self = (_temp = _class = class FragmentIndentation extends _stream.default.Transform {
   constructor() {
-    super({ objectMode: true })
+    super({
+      objectMode: true
+    });
   }
 
   static TransformToFragmentKeys() {
-    return new (class extends self {
+    return new class extends self {
       constructor() {
-        super()
-        self.fragmentArray = Array()
+        super();
+        self.fragmentArray = Array();
       }
+
       async _transform(file, encoding, callback) {
-        if (file.isStream()) return callback(new Error('☕ SZN - fragmentIndentation does not support Buffer/String streams, only object streams that apply the vinyl-fs specification'))
-        let contents = file.contents.toString()
-        file.contents = await new Buffer(self.replaceIndentationWithFragmentKey(contents))
-        await callback(null, file)
+        if (file.isStream()) return callback(new Error('☕ SZN - fragmentIndentation does not support Buffer/String streams, only object streams that apply the vinyl-fs specification'));
+        let contents = file.contents.toString();
+        file.contents = await new Buffer(self.replaceIndentationWithFragmentKey(contents));
+        await callback(null, file);
       }
-    })()
+
+    }();
   }
 
   static TransformBackToFragment() {
-    return new (class extends self {
+    return new class extends self {
       constructor() {
-        super()
+        super();
       }
+
       async _transform(file, encoding, callback) {
-        if (file.isStream()) return callback(new Error('☕ SZN - fragmentIndentation does not support streams'))
-        let contents = file.contents.toString()
-        file.contents = await new Buffer(self.replaceOriginalFragment(contents))
-        await callback(null, file)
+        if (file.isStream()) return callback(new Error('☕ SZN - fragmentIndentation does not support streams'));
+        let contents = file.contents.toString();
+        file.contents = await new Buffer(self.replaceOriginalFragment(contents));
+        await callback(null, file);
       }
-    })()
+
+    }();
   }
 
   static replaceOriginalFragment(string) {
     for (var fragmentKey in self.fragmentArray) {
-      string = string.replace(fragmentKey, self.fragmentArray[fragmentKey])
+      string = string.replace(fragmentKey, self.fragmentArray[fragmentKey]);
     }
-    return string
+
+    return string;
   }
 
   static replaceIndentationWithFragmentKey(string) {
-    let fragmentArray = []
-    let match = null
+    let fragmentArray = [];
+    let match = null;
+
     while (string.lastIndexOf(self.indentation.openning.symbol) >= 0) {
-      let startIndex = string.lastIndexOf(self.indentation.openning.symbol)
-      let endIndex = string.lastIndexOf(self.indentation.closing.symbol) + self.indentation.closing.length
-      let generatedKey = self.generateKey(7, fragmentArray)
-      let insertedString = self.fragmentKey + generatedKey
-      // insertedString = `${insertedString}` // Not in use - fix issue with babel transform plugins that add period mark/symbol in case a fragrment is replaced with a simple text string.
-      self.fragmentArray[`${insertedString}`] = string.substring(startIndex, endIndex)
-      string = self.replaceBetweenIndexes(string, startIndex, endIndex, insertedString)
-    }
-    // let occurenceArray = self.indexRangeOfFragmentOccurence(string, self.indentation.openning, self.indentation.closing)
-    return string
+      let startIndex = string.lastIndexOf(self.indentation.openning.symbol);
+      let endIndex = string.lastIndexOf(self.indentation.closing.symbol) + self.indentation.closing.length;
+      let generatedKey = self.generateKey(7, fragmentArray);
+      let insertedString = self.fragmentKey + generatedKey; // insertedString = `${insertedString}` // Not in use - fix issue with babel transform plugins that add period mark/symbol in case a fragrment is replaced with a simple text string.
+
+      self.fragmentArray[`${insertedString}`] = string.substring(startIndex, endIndex);
+      string = self.replaceBetweenIndexes(string, startIndex, endIndex, insertedString);
+    } // let occurenceArray = self.indexRangeOfFragmentOccurence(string, self.indentation.openning, self.indentation.closing)
+
+
+    return string;
   }
 
   static generateKey(length, notInArray) {
-    let key
+    let key;
+
     do {
-      key = Math.random()
-        .toString()
-        .slice(2, length + 2)
-    } while (typeof notInArray[key] != 'undefined')
-    return key
+      key = Math.random().toString().slice(2, length + 2);
+    } while (typeof notInArray[key] != 'undefined');
+
+    return key;
   }
 
   static replaceBetweenIndexes(string, startIndex, endIndex, insertedString) {
-    return string.substring(0, startIndex) + insertedString + string.substring(endIndex)
-  }
-
-  // static indexRangeOfFragmentOccurence(string, indentationOpenning, indentationClosing) {
+    return string.substring(0, startIndex) + insertedString + string.substring(endIndex);
+  } // static indexRangeOfFragmentOccurence(string, indentationOpenning, indentationClosing) {
   //     let arrayOpenning = self.indexOfOccurence(string, indentationOpenning)
   //     let arrayClosing = self.indexOfOccurence(string, indentationClosing)
   //     let combinedIndexArray = self.mergeArraysToArrayObjectOfSameSize(arrayOpenning, arrayClosing)
   // }
-
   // static indexOfOccurence(string, indentation) {
   //     let match, matches = [];
   //     while ((match = indentation.regex.exec(string)) != null) {
@@ -113,7 +110,6 @@ const self = class FragmentIndentation extends stream.Transform {
   //     }
   //     return matches
   // }
-
   // static mergeArraysToArrayObjectOfSameSize(arrayOpenning, arrayClosing) {
   //     let length = arrayOpenning.length
   //     let combined = []
@@ -122,8 +118,20 @@ const self = class FragmentIndentation extends stream.Transform {
   //     }
   //     return combined
   // }
-}
 
+
+}, _class.indentation = {
+  openning: {
+    regex: /{%/g,
+    symbol: '{%',
+    length: 2
+  },
+  closing: {
+    regex: /%}/g,
+    symbol: '%}',
+    length: 2
+  }
+}, _class.fragmentKey = 'FRAGMENT', _class.fragmentArray = [], _temp);
 module.exports = {
-  FragmentIndentation: self,
-}
+  FragmentIndentation: self
+};
