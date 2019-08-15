@@ -1,129 +1,129 @@
-import stream from 'stream'
+"use strict";var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");var _stream = _interopRequireDefault(require("stream"));var _class, _temp;
 
-/**
- * Transform stream that follows the file object stream (vinyl file stream) specification - https://github.com/gulpjs/vinyl
- * Temporarly removes inline fragments from file contents, allowing extended syntax to work with parser streams.
- * Preventing latter streams from throwing, as these fragments specified by indentation symbols are not parsed correctly.
- *
- * Example - server-side templating fragments should be removed from files (e.g. html, js, etc.) before being parsed by latter streams.
- *      `<html>{% print('exampleText') %}</html>`
- *          ↓
- *      `<html>Fragment#####</html>` // substitute by a position marker (a generated number that conrresponds to the specific fragment)
- *          ↓
- *      manipulate stream contents
- *          ↓
- *      `<html>{% print('exampleText') %}</html>` // replace fragment markers with the actual fragment content.
- */
-const self = class FragmentIndentation extends stream.Transform {
-  static indentation = {
-    openning: {
-      regex: /{%/g,
-      symbol: '{%',
-      length: 2,
-    },
-    closing: {
-      regex: /%}/g,
-      symbol: '%}',
-      length: 2,
-    },
-  }
-  static fragmentKey = 'FRAGMENT'
-  static fragmentArray = []
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const self = (_temp = _class = class FragmentIndentation extends _stream.default.Transform {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   constructor() {
-    super({ objectMode: true })
+    super({ objectMode: true });
   }
 
   static TransformToFragmentKeys() {
-    return new (class extends self {
+    return new class extends self {
       constructor() {
-        super()
-        self.fragmentArray = Array()
+        super();
+        self.fragmentArray = Array();
       }
       async _transform(file, encoding, callback) {
-        if (file.isStream()) return callback(new Error('☕ SZN - fragmentIndentation does not support Buffer/String streams, only object streams that apply the vinyl-fs specification'))
-        let contents = file.contents.toString()
-        file.contents = await new Buffer(self.replaceIndentationWithFragmentKey(contents))
-        await callback(null, file)
-      }
-    })()
+        if (file.isStream()) return callback(new Error('☕ SZN - fragmentIndentation does not support Buffer/String streams, only object streams that apply the vinyl-fs specification'));
+        let contents = file.contents.toString();
+        file.contents = await new Buffer(self.replaceIndentationWithFragmentKey(contents));
+        await callback(null, file);
+      }}();
+
   }
 
   static TransformBackToFragment() {
-    return new (class extends self {
+    return new class extends self {
       constructor() {
-        super()
+        super();
       }
       async _transform(file, encoding, callback) {
-        if (file.isStream()) return callback(new Error('☕ SZN - fragmentIndentation does not support streams'))
-        let contents = file.contents.toString()
-        file.contents = await new Buffer(self.replaceOriginalFragment(contents))
-        await callback(null, file)
-      }
-    })()
+        if (file.isStream()) return callback(new Error('☕ SZN - fragmentIndentation does not support streams'));
+        let contents = file.contents.toString();
+        file.contents = await new Buffer(self.replaceOriginalFragment(contents));
+        await callback(null, file);
+      }}();
+
   }
 
   static replaceOriginalFragment(string) {
     for (var fragmentKey in self.fragmentArray) {
-      string = string.replace(fragmentKey, self.fragmentArray[fragmentKey])
+      string = string.replace(fragmentKey, self.fragmentArray[fragmentKey]);
     }
-    return string
+    return string;
   }
 
   static replaceIndentationWithFragmentKey(string) {
-    let fragmentArray = []
-    let match = null
+    let fragmentArray = [];
+    let match = null;
     while (string.lastIndexOf(self.indentation.openning.symbol) >= 0) {
-      let startIndex = string.lastIndexOf(self.indentation.openning.symbol)
-      let endIndex = string.lastIndexOf(self.indentation.closing.symbol) + self.indentation.closing.length
-      let generatedKey = self.generateKey(7, fragmentArray)
-      let insertedString = self.fragmentKey + generatedKey
-      // insertedString = `${insertedString}` // Not in use - fix issue with babel transform plugins that add period mark/symbol in case a fragrment is replaced with a simple text string.
-      self.fragmentArray[`${insertedString}`] = string.substring(startIndex, endIndex)
-      string = self.replaceBetweenIndexes(string, startIndex, endIndex, insertedString)
+      let startIndex = string.lastIndexOf(self.indentation.openning.symbol);
+      let endIndex = string.lastIndexOf(self.indentation.closing.symbol) + self.indentation.closing.length;
+      let generatedKey = self.generateKey(7, fragmentArray);
+      let insertedString = self.fragmentKey + generatedKey;
+
+      self.fragmentArray[`${insertedString}`] = string.substring(startIndex, endIndex);
+      string = self.replaceBetweenIndexes(string, startIndex, endIndex, insertedString);
     }
-    // let occurenceArray = self.indexRangeOfFragmentOccurence(string, self.indentation.openning, self.indentation.closing)
-    return string
+
+    return string;
   }
 
   static generateKey(length, notInArray) {
-    let key
+    let key;
     do {
-      key = Math.random()
-        .toString()
-        .slice(2, length + 2)
-    } while (typeof notInArray[key] != 'undefined')
-    return key
+      key = Math.random().
+      toString().
+      slice(2, length + 2);
+    } while (typeof notInArray[key] != 'undefined');
+    return key;
   }
 
   static replaceBetweenIndexes(string, startIndex, endIndex, insertedString) {
-    return string.substring(0, startIndex) + insertedString + string.substring(endIndex)
-  }
+    return string.substring(0, startIndex) + insertedString + string.substring(endIndex);
+  }}, _class.indentation = { openning: { regex: /{%/g, symbol: '{%', length: 2 }, closing: { regex: /%}/g, symbol: '%}', length: 2 } }, _class.fragmentKey = 'FRAGMENT', _class.fragmentArray = [], _temp);
 
-  // static indexRangeOfFragmentOccurence(string, indentationOpenning, indentationClosing) {
-  //     let arrayOpenning = self.indexOfOccurence(string, indentationOpenning)
-  //     let arrayClosing = self.indexOfOccurence(string, indentationClosing)
-  //     let combinedIndexArray = self.mergeArraysToArrayObjectOfSameSize(arrayOpenning, arrayClosing)
-  // }
 
-  // static indexOfOccurence(string, indentation) {
-  //     let match, matches = [];
-  //     while ((match = indentation.regex.exec(string)) != null) {
-  //         matches.push(match.index);
-  //     }
-  //     return matches
-  // }
 
-  // static mergeArraysToArrayObjectOfSameSize(arrayOpenning, arrayClosing) {
-  //     let length = arrayOpenning.length
-  //     let combined = []
-  //     for (var index = 0; index < length; index++) {
-  //         combined.push({ openning: arrayOpenning[index], closing: arrayClosing[index] })
-  //     }
-  //     return combined
-  // }
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 module.exports = {
-  FragmentIndentation: self,
-}
+  FragmentIndentation: self };
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NvdXJjZS9zY3JpcHQuanMiXSwibmFtZXMiOlsic2VsZiIsIkZyYWdtZW50SW5kZW50YXRpb24iLCJzdHJlYW0iLCJUcmFuc2Zvcm0iLCJjb25zdHJ1Y3RvciIsIm9iamVjdE1vZGUiLCJUcmFuc2Zvcm1Ub0ZyYWdtZW50S2V5cyIsImZyYWdtZW50QXJyYXkiLCJBcnJheSIsIl90cmFuc2Zvcm0iLCJmaWxlIiwiZW5jb2RpbmciLCJjYWxsYmFjayIsImlzU3RyZWFtIiwiRXJyb3IiLCJjb250ZW50cyIsInRvU3RyaW5nIiwiQnVmZmVyIiwicmVwbGFjZUluZGVudGF0aW9uV2l0aEZyYWdtZW50S2V5IiwiVHJhbnNmb3JtQmFja1RvRnJhZ21lbnQiLCJyZXBsYWNlT3JpZ2luYWxGcmFnbWVudCIsInN0cmluZyIsImZyYWdtZW50S2V5IiwicmVwbGFjZSIsIm1hdGNoIiwibGFzdEluZGV4T2YiLCJpbmRlbnRhdGlvbiIsIm9wZW5uaW5nIiwic3ltYm9sIiwic3RhcnRJbmRleCIsImVuZEluZGV4IiwiY2xvc2luZyIsImxlbmd0aCIsImdlbmVyYXRlZEtleSIsImdlbmVyYXRlS2V5IiwiaW5zZXJ0ZWRTdHJpbmciLCJzdWJzdHJpbmciLCJyZXBsYWNlQmV0d2VlbkluZGV4ZXMiLCJub3RJbkFycmF5Iiwia2V5IiwiTWF0aCIsInJhbmRvbSIsInNsaWNlIiwicmVnZXgiLCJtb2R1bGUiLCJleHBvcnRzIl0sIm1hcHBpbmdzIjoia0dBQUEsd0Q7Ozs7Ozs7Ozs7Ozs7Ozs7QUFnQkEsTUFBTUEsSUFBSSxxQkFBRyxNQUFNQyxtQkFBTixTQUFrQ0MsZ0JBQU9DLFNBQXpDLENBQW1EOzs7Ozs7Ozs7Ozs7Ozs7O0FBZ0I5REMsRUFBQUEsV0FBVyxHQUFHO0FBQ1osVUFBTSxFQUFFQyxVQUFVLEVBQUUsSUFBZCxFQUFOO0FBQ0Q7O0FBRUQsU0FBT0MsdUJBQVAsR0FBaUM7QUFDL0IsV0FBTyxJQUFLLGNBQWNOLElBQWQsQ0FBbUI7QUFDN0JJLE1BQUFBLFdB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b3VyY2VzQ29udGVudCI6WyJpbXBvcnQgc3RyZWFtIGZyb20gJ3N0cmVhbSdcblxuLyoqXG4gKiBUcmFuc2Zvcm0gc3RyZWFtIHRoYXQgZm9sbG93cyB0aGUgZmlsZSBvYmplY3Qgc3RyZWFtICh2aW55bCBmaWxlIHN0cmVhbSkgc3BlY2lmaWNhdGlvbiAtIGh0dHBzOi8vZ2l0aHViLmNvbS9ndWxwanMvdmlueWxcbiAqIFRlbXBvcmFybHkgcmVtb3ZlcyBpbmxpbmUgZnJhZ21lbnRzIGZyb20gZmlsZSBjb250ZW50cywgYWxsb3dpbmcgZXh0ZW5kZWQgc3ludGF4IHRvIHdvcmsgd2l0aCBwYXJzZXIgc3RyZWFtcy5cbiAqIFByZXZlbnRpbmcgbGF0dGVyIHN0cmVhbXMgZnJvbSB0aHJvd2luZywgYXMgdGhlc2UgZnJhZ21lbnRzIHNwZWNpZmllZCBieSBpbmRlbnRhdGlvbiBzeW1ib2xzIGFyZSBub3QgcGFyc2VkIGNvcnJlY3RseS5cbiAqXG4gKiBFeGFtcGxlIC0gc2VydmVyLXNpZGUgdGVtcGxhdGluZyBmcmFnbWVudHMgc2hvdWxkIGJlIHJlbW92ZWQgZnJvbSBmaWxlcyAoZS5nLiBodG1sLCBqcywgZXRjLikgYmVmb3JlIGJlaW5nIHBhcnNlZCBieSBsYXR0ZXIgc3RyZWFtcy5cbiAqICAgICAgYDxodG1sPnslIHByaW50KCdleGFtcGxlVGV4dCcpICV9PC9odG1sPmBcbiAqICAgICAgICAgIOKGk1xuICogICAgICBgPGh0bWw+RnJhZ21lbnQjIyMjIzwvaHRtbD5gIC8vIHN1YnN0aXR1dGUgYnkgYSBwb3NpdGlvbiBtYXJrZXIgKGEgZ2VuZXJhdGVkIG51bWJlciB0aGF0IGNvbnJyZXNwb25kcyB0byB0aGUgc3BlY2lmaWMgZnJhZ21lbnQpXG4gKiAgICAgICAgICDihpNcbiAqICAgICAgbWFuaXB1bGF0ZSBzdHJlYW0gY29udGVudHNcbiAqICAgICAgICAgIOKGk1xuICogICAgICBgPGh0bWw+eyUgcHJpbnQoJ2V4YW1wbGVUZXh0JykgJX08L2h0bWw+YCAvLyByZXBsYWNlIGZyYWdtZW50IG1hcmtlcnMgd2l0aCB0aGUgYWN0dWFsIGZyYWdtZW50IGNvbnRlbnQuXG4gKi9cbmNvbnN0IHNlbGYgPSBjbGFzcyBGcmFnbWVudEluZGVudGF0aW9uIGV4dGVuZHMgc3RyZWFtLlRyYW5zZm9ybSB7XG4gIHN0YXRpYyBpbmRlbnRhdGlvbiA9IHtcbiAgICBvcGVubmluZzoge1xuICAgICAgcmVnZXg6IC97JS9nLFxuICAgICAgc3ltYm9sOiAneyUnLFxuICAgICAgbGVuZ3RoOiAyLFxuICAgIH0sXG4gICAgY2xvc2luZzoge1xuICAgICAgcmVnZXg6IC8lfS9nLFxuICAgICAgc3ltYm9sOiAnJX0nLFxuICAgICAgbGVuZ3RoOiAyLFxuICAgIH0sXG4gIH1cbiAgc3RhdGljIGZyYWdtZW50S2V5ID0gJ0ZSQUdNRU5UJ1xuICBzdGF0aWMgZnJhZ21lbnRBcnJheSA9IFtdXG5cbiAgY29uc3RydWN0b3IoKSB7XG4gICAgc3VwZXIoeyBvYmplY3RNb2RlOiB0cnVlIH0pXG4gIH1cblxuICBzdGF0aWMgVHJhbnNmb3JtVG9GcmFnbWVudEtleXMoKSB7XG4gICAgcmV0dXJuIG5ldyAoY2xhc3MgZXh0ZW5kcyBzZWxmIHtcbiAgICAgIGNvbnN0cnVjdG9yKCkge1xuICAgICAgICBzdXBlcigpXG4gICAgICAgIHNlbGYuZnJhZ21lbnRBcnJheSA9IEFycmF5KClcbiAgICAgIH1cbiAgICAgIGFzeW5jIF90cmFuc2Zvcm0oZmlsZSwgZW5jb2RpbmcsIGNhbGxiYWNrKSB7XG4gICAgICAgIGlmIChmaWxlLmlzU3RyZWFtKCkpIHJldHVybiBjYWxsYmFjayhuZXcgRXJyb3IoJ+KYlSBTWk4gLSBmcmFnbWVudEluZGVudGF0aW9uIGRvZXMgbm90IHN1cHBvcnQgQnVmZmVyL1N0cmluZyBzdHJlYW1zLCBvbmx5IG9iamVjdCBzdHJlYW1zIHRoYXQgYXBwbHkgdGhlIHZpbnlsLWZzIHNwZWNpZmljYXRpb24nKSlcbiAgICAgICAgbGV0IGNvbnRlbnRzID0gZmlsZS5jb250ZW50cy50b1N0cmluZygpXG4gICAgICAgIGZpbGUuY29udGVudHMgPSBhd2FpdCBuZXcgQnVmZmVyKHNlbGYucmVwbGFjZUluZGVudGF0aW9uV2l0aEZyYWdtZW50S2V5KGNvbnRlbnRzKSlcbiAgICAgICAgYXdhaXQgY2FsbGJhY2sobnVsbCwgZmlsZSlcbiAgICAgIH1cbiAgICB9KSgpXG4gIH1cblxuICBzdGF0aWMgVHJhbnNmb3JtQmFja1RvRnJhZ21lbnQoKSB7XG4gICAgcmV0dXJuIG5ldyAoY2xhc3MgZXh0ZW5kcyBzZWxmIHtcbiAgICAgIGNvbnN0cnVjdG9yKCkge1xuICAgICAgICBzdXBlcigpXG4gICAgICB9XG4gICAgICBhc3luYyBfdHJhbnNmb3JtKGZpbGUsIGVuY29kaW5nLCBjYWxsYmFjaykge1xuICAgICAgICBpZiAoZmlsZS5pc1N0cmVhbSgpKSByZXR1cm4gY2FsbGJhY2sobmV3IEVycm9yKCfimJUgU1pOIC0gZnJhZ21lbnRJbmRlbnRhdGlvbiBkb2VzIG5vdCBzdXBwb3J0IHN0cmVhbXMnKSlcbiAgICAgICAgbGV0IGNvbnRlbnRzID0gZmlsZS5jb250ZW50cy50b1N0cmluZygpXG4gICAgICAgIGZpbGUuY29udGVudHMgPSBhd2FpdCBuZXcgQnVmZmVyKHNlbGYucmVwbGFjZU9yaWdpbmFsRnJhZ21lbnQoY29udGVudHMpKVxuICAgICAgICBhd2FpdCBjYWxsYmFjayhudWxsLCBmaWxlKVxuICAgICAgfVxuICAgIH0pKClcbiAgfVxuXG4gIHN0YXRpYyByZXBsYWNlT3JpZ2luYWxGcmFnbWVudChzdHJpbmcpIHtcbiAgICBmb3IgKHZhciBmcmFnbWVudEtleSBpbiBzZWxmLmZyYWdtZW50QXJyYXkpIHtcbiAgICAgIHN0cmluZyA9IHN0cmluZy5yZXBsYWNlKGZyYWdtZW50S2V5LCBzZWxmLmZyYWdtZW50QXJyYXlbZnJhZ21lbnRLZXldKVxuICAgIH1cbiAgICByZXR1cm4gc3RyaW5nXG4gIH1cblxuICBzdGF0aWMgcmVwbGFjZUluZGVudGF0aW9uV2l0aEZyYWdtZW50S2V5KHN0cmluZykge1xuICAgIGxldCBmcmFnbWVudEFycmF5ID0gW11cbiAgICBsZXQgbWF0Y2ggPSBudWxsXG4gICAgd2hpbGUgKHN0cmluZy5sYXN0SW5kZXhPZihzZWxmLmluZGVudGF0aW9uLm9wZW5uaW5nLnN5bWJvbCkgPj0gMCkge1xuICAgICAgbGV0IHN0YXJ0SW5kZXggPSBzdHJpbmcubGFzdEluZGV4T2Yoc2VsZi5pbmRlbnRhdGlvbi5vcGVubmluZy5zeW1ib2wpXG4gICAgICBsZXQgZW5kSW5kZXggPSBzdHJpbmcubGFzdEluZGV4T2Yoc2VsZi5pbmRlbnRhdGlvbi5jbG9zaW5nLnN5bWJvbCkgKyBzZWxmLmluZGVudGF0aW9uLmNsb3NpbmcubGVuZ3RoXG4gICAgICBsZXQgZ2VuZXJhdGVkS2V5ID0gc2VsZi5nZW5lcmF0ZUtleSg3LCBmcmFnbWVudEFycmF5KVxuICAgICAgbGV0IGluc2VydGVkU3RyaW5nID0gc2VsZi5mcmFnbWVudEtleSArIGdlbmVyYXRlZEtleVxuICAgICAgLy8gaW5zZXJ0ZWRTdHJpbmcgPSBgJHtpbnNlcnRlZFN0cmluZ31gIC8vIE5vdCBpbiB1c2UgLSBmaXggaXNzdWUgd2l0aCBiYWJlbCB0cmFuc2Zvcm0gcGx1Z2lucyB0aGF0IGFkZCBwZXJpb2QgbWFyay9zeW1ib2wgaW4gY2FzZSBhIGZyYWdybWVudCBpcyByZXBsYWNlZCB3aXRoIGEgc2ltcGxlIHRleHQgc3RyaW5nLlxuICAgICAgc2VsZi5mcmFnbWVudEFycmF5W2Ake2luc2VydGVkU3RyaW5nfWBdID0gc3RyaW5nLnN1YnN0cmluZyhzdGFydEluZGV4LCBlbmRJbmRleClcbiAgICAgIHN0cmluZyA9IHNlbGYucmVwbGFjZUJldHdlZW5JbmRleGVzKHN0cmluZywgc3RhcnRJbmRleCwgZW5kSW5kZXgsIGluc2VydGVkU3RyaW5nKVxuICAgIH1cbiAgICAvLyBsZXQgb2NjdXJlbmNlQXJyYXkgPSBzZWxmLmluZGV4UmFuZ2VPZkZyYWdtZW50T2NjdXJlbmNlKHN0cmluZywgc2VsZi5pbmRlbnRhdGlvbi5vcGVubmluZywgc2VsZi5pbmRlbnRhdGlvbi5jbG9zaW5nKVxuICAgIHJldHVybiBzdHJpbmdcbiAgfVxuXG4gIHN0YXRpYyBnZW5lcmF0ZUtleShsZW5ndGgsIG5vdEluQXJyYXkpIHtcbiAgICBsZXQga2V5XG4gICAgZG8ge1xuICAgICAga2V5ID0gTWF0aC5yYW5kb20oKVxuICAgICAgICAudG9TdHJpbmcoKVxuICAgICAgICAuc2xpY2UoMiwgbGVuZ3RoICsgMilcbiAgICB9IHdoaWxlICh0eXBlb2Ygbm90SW5BcnJheVtrZXldICE9ICd1bmRlZmluZWQnKVxuICAgIHJldHVybiBrZXlcbiAgfVxuXG4gIHN0YXRpYyByZXBsYWNlQmV0d2VlbkluZGV4ZXMoc3RyaW5nLCBzdGFydEluZGV4LCBlbmRJbmRleCwgaW5zZXJ0ZWRTdHJpbmcpIHtcbiAgICByZXR1cm4gc3RyaW5nLnN1YnN0cmluZygwLCBzdGFydEluZGV4KSArIGluc2VydGVkU3RyaW5nICsgc3RyaW5nLnN1YnN0cmluZyhlbmRJbmRleClcbiAgfVxuXG4gIC8vIHN0YXRpYyBpbmRleFJhbmdlT2ZGcmFnbWVudE9jY3VyZW5jZShzdHJpbmcsIGluZGVudGF0aW9uT3Blbm5pbmcsIGluZGVudGF0aW9uQ2xvc2luZykge1xuICAvLyAgICAgbGV0IGFycmF5T3Blbm5pbmcgPSBzZWxmLmluZGV4T2ZPY2N1cmVuY2Uoc3RyaW5nLCBpbmRlbnRhdGlvbk9wZW5uaW5nKVxuICAvLyAgICAgbGV0IGFycmF5Q2xvc2luZyA9IHNlbGYuaW5kZXhPZk9jY3VyZW5jZShzdHJpbmcsIGluZGVudGF0aW9uQ2xvc2luZylcbiAgLy8gICAgIGxldCBjb21iaW5lZEluZGV4QXJyYXkgPSBzZWxmLm1lcmdlQXJyYXlzVG9BcnJheU9iamVjdE9mU2FtZVNpemUoYXJyYXlPcGVubmluZywgYXJyYXlDbG9zaW5nKVxuICAvLyB9XG5cbiAgLy8gc3RhdGljIGluZGV4T2ZPY2N1cmVuY2Uoc3RyaW5nLCBpbmRlbnRhdGlvbikge1xuICAvLyAgICAgbGV0IG1hdGNoLCBtYXRjaGVzID0gW107XG4gIC8vICAgICB3aGlsZSAoKG1hdGNoID0gaW5kZW50YXRpb24ucmVnZXguZXhlYyhzdHJpbmcpKSAhPSBudWxsKSB7XG4gIC8vICAgICAgICAgbWF0Y2hlcy5wdXNoKG1hdGNoLmluZGV4KTtcbiAgLy8gICAgIH1cbiAgLy8gICAgIHJldHVybiBtYXRjaGVzXG4gIC8vIH1cblxuICAvLyBzdGF0aWMgbWVyZ2VBcnJheXNUb0FycmF5T2JqZWN0T2ZTYW1lU2l6ZShhcnJheU9wZW5uaW5nLCBhcnJheUNsb3NpbmcpIHtcbiAgLy8gICAgIGxldCBsZW5ndGggPSBhcnJheU9wZW5uaW5nLmxlbmd0aFxuICAvLyAgICAgbGV0IGNvbWJpbmVkID0gW11cbiAgLy8gICAgIGZvciAodmFyIGluZGV4ID0gMDsgaW5kZXggPCBsZW5ndGg7IGluZGV4KyspIHtcbiAgLy8gICAgICAgICBjb21iaW5lZC5wdXNoKHsgb3Blbm5pbmc6IGFycmF5T3Blbm5pbmdbaW5kZXhdLCBjbG9zaW5nOiBhcnJheUNsb3NpbmdbaW5kZXhdIH0pXG4gIC8vICAgICB9XG4gIC8vICAgICByZXR1cm4gY29tYmluZWRcbiAgLy8gfVxufVxuXG5tb2R1bGUuZXhwb3J0cyA9IHtcbiAgRnJhZ21lbnRJbmRlbnRhdGlvbjogc2VsZixcbn1cbiJdfQ==
