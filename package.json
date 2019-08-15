@@ -1,7 +1,7 @@
 {
 	"name": "@dependency/fragmentIndentationObjectStream",
 	"main": "./entrypoint/programmaticAPI",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"scripts": {
 		"buildAndRelease": "yarn run scriptManager shouldCompileScript=true JSProject/buildAndRelease \".moduleProject({})\""
 	},
