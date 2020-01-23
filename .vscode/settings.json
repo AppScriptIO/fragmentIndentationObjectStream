@@ -50,5 +50,24 @@
     "eslint.codeAction.showDocumentation": {
         "enable": true
     },
-    "typescript.check.npmIsInstalled": false
+    "typescript.check.npmIsInstalled": false,
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#13d64e",
+        "activityBar.activeBorder": "#804fef",
+        "activityBar.foreground": "#15202b",
+        "activityBar.inactiveForeground": "#15202b99",
+        "activityBarBadge.background": "#804fef",
+        "activityBarBadge.foreground": "#e7e7e7",
+        "titleBar.activeBackground": "#13d64e",
+        "titleBar.inactiveBackground": "#13d64e99",
+        "titleBar.activeForeground": "#15202b",
+        "titleBar.inactiveForeground": "#15202b99",
+        "statusBar.background": "#13d64e",
+        "statusBarItem.hoverBackground": "#0fa73d",
+        "statusBar.foreground": "#15202b"
+    },
+    "peacock.color": "#2fed69",
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    }
 }
